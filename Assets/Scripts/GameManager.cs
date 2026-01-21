@@ -29,18 +29,11 @@ public class GameManager : MonoBehaviour
         canvasPanel = GameObject.Find("PanelBotones");
         canvasTexto = GameObject.Find("TextoPrincipal");
 
-        StartCoroutine(Bienvenida());
-
     }
 
     // Update is called once per frame
     void Update()
     {
         
-    }
-
-    IEnumerator Bienvenida()
-    {
-
     }
 }
