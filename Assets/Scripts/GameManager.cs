@@ -3,161 +3,168 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEditor.SearchService;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    int turno = 0; // 0 --> JUGADOR
-                   // 1 --> IA
+    bool turn = true; // true -> player / false -> ai
 
-    // DATOS DE LA PARTIDA
-    int ronda = 1;
-    int maxRondas = 5;
-    int puntosJugador = 0;
-    int empates = 0;
-    int puntosIA = 0;
+    // MATCH STATISTICS
+    private int        round = 1;
+    public  int    maxRounds = 0;
+    private int playerPoints = 0;
+    private int     aiPoints = 0;
 
     // DATOS DE LA RONDA
-    int tiradaJugador;
-    int tiradaIA;
+    int playerTurn;
+    int aiTurn;
 
-    GameObject      canvasPanel;
-    TextMeshProUGUI canvasTexto;
+    GameObject     startCanvas; // This screen allows you to choose among three different round options.
+    GameObject       endCanvas; // "Play Again" and "Exit" buttons when the game is over.
+    GameObject      mainCanvas; // Game shows this canvas when you're playing.
+    GameObject   canvasButtons;
+    TextMeshProUGUI canvasText;
 
     // Start is called before the first frame update
     void Start()
     {
-        canvasPanel = GameObject.Find("PanelBotones");
-        canvasTexto = GameObject.Find("TextoPrincipal").GetComponent<TextMeshProUGUI>();
-
-        //Bienvenida(); --> ERROR LLAMAR A LA CORRUTINA COMO UNA FUNCIÓN NORMAL
-        StartCoroutine(Bienvenida());
+        startCanvas   = GameObject.Find("StartCanvas");
+        endCanvas     = GameObject.Find("EndCanvas");
+        mainCanvas    = GameObject.Find("Canvas");
+        canvasButtons = GameObject.Find("ButtonsPanel");
+        canvasText    = GameObject.Find("MainText").GetComponent<TextMeshProUGUI>();
+        endCanvas.SetActive(false);
+        mainCanvas.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (turno == 0) // TIRADA JUGADOR
-        {
-            
-        }
-        else if (turno == 1) // TIRADA IA
-        {
-            TiradaIA();
-            //  CALCULAR QUIEN HA GANADO
-            CalculoGanador();
-            turno = 0;
-            ronda++;
-        }
-
-        if (ronda == maxRondas)
-        {
-            StartCoroutine(FinDeLaPartida());
-        }
+        
     }
 
-    // TIRADA JUGADOR:
-        // 0 -- piedra
-        // 1 -- papel
-        // 2 -- tijera
-    public void TiradaJugador(int tirada) 
+    IEnumerator Game()
     {
-        tiradaJugador = tirada;
-        StartCoroutine(AvanzaRonda());
-    }
+        // 0 -> 2, 1 -> 0, 2 -> 1
+        // WELCOME SCREEN
+        canvasButtons.SetActive(false);
+        canvasText.text = "Welcome to\n Rock-Paper-Scissors!";
+        yield return new WaitForSeconds(1f);
+        canvasText.text = "This match will take\n" + maxRounds + " rounds.";
+        yield return new WaitForSeconds(1f);
 
-    public void TiradaIA()
-    {
-        tiradaIA = Random.Range(0, 3);
-    }
-
-    void CalculoGanador()
-    {
-       if (tiradaJugador == tiradaIA)
+        // GAME STARTS
+        while (round <= maxRounds)
         {
-            empates++;
-            StartCoroutine(VictoriaJugador());
+            Debug.Log("Round " + round);
+            // Player's turn
+            canvasText.text = "Pick an option.";
+            canvasButtons.SetActive(true);
+            while (turn == true)
+            {
+                yield return null;
+            }
+            //AI turn
+            canvasButtons.SetActive(false);
+            canvasText.text = "AI is thinking...";
+            yield return new WaitForSeconds(1.5f);
+            aiPlay();
+            if (playerTurn == 0 && aiTurn == 2 || playerTurn == 1 && aiTurn == 0 || playerTurn == 2 && aiTurn == 1)
+            {
+                canvasText.text = "Congrats!\nYou won this round!";
+                playerPoints++;
+                yield return new WaitForSeconds(1.5f);
+            }
+            else if (playerTurn == aiTurn)
+            {
+                canvasText.text = "It's a tie!";
+                yield return new WaitForSeconds(1.5f);
+            }
+            else
+            {
+                canvasText.text = "Too bad!\nAI won this round!";
+                aiPoints++;
+                yield return new WaitForSeconds(1.5f);
+            }
+            round++;
+            turn = true;
         }
-        else if (tiradaJugador == 0 & tiradaIA == 2 || tiradaJugador == 1 && tiradaIA == 0 || tiradaJugador == 2 && tiradaIA == 1)
+
+        canvasText.text = "Calculating results...";
+        yield return new WaitForSeconds(2f);
+
+        if (playerPoints > aiPoints)
         {
-            puntosJugador++;
-            StartCoroutine(VictoriaIA());
+            canvasText.text = "You won!\n" + playerPoints + " - " + aiPoints;
+            endCanvas.SetActive(true);
+        }
+        else if (aiPoints > playerPoints)
+        {
+            canvasText.text = "You lost...\n" + playerPoints + " - " + aiPoints;
+            endCanvas.SetActive(true);
         }
         else
         {
-            puntosIA++;
-            StartCoroutine(RondaEmpate());
+            canvasText.text = "You tied with the AI.\n" + playerPoints + " - " + aiPoints;
+            endCanvas.SetActive(true);
         }
     }
-    
-    IEnumerator Bienvenida()
+
+    public void aiPlay()
     {
-        // 1 -- BIENVENIDA AL JUEGO
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "BIENVENIDO AL JUEGO PIEDRA-PAPEL-TIJERA";
-
-        // VAMOS A PARAR DE EJECUTAR LA FUNCIÓN
-        // DURANTE 2.5 SEGUNDOS
-        // UNA VEZ PASADOS, LA FUNCIÓN CONTINUARÁ EJECUTANDOSE
-        yield return new WaitForSeconds(0.5f);
-
-        // 2 -- ANUNCIAR LA RONDA
-        canvasTexto.text = "RONDA " + ronda;
-        yield return new WaitForSeconds(0.5f);
-
-
-        // 3 -- MOSTRAMOS LOS BOTONES
-        canvasTexto.text = "ELIGE:";
-        canvasPanel.SetActive(true);
-        //yield return null;
+        aiTurn = Random.Range(0, 3);
     }
 
-    IEnumerator AvanzaRonda()
+    public void ThreeRounds()
     {
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "La IA está pensando...";
-        turno = 1;
-        yield return new WaitForSeconds(2.5f);
+        startCanvas.SetActive(false);
+        mainCanvas.SetActive(true);
+        maxRounds = 3;
+        StartCoroutine(Game());
     }
 
-    IEnumerator VictoriaJugador()
+    public void FiveRounds()
     {
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "¡Enhorabuena, ganaste esta ronda!";
-        yield return new WaitForSeconds(1.0f);
+        startCanvas.SetActive(false);
+        mainCanvas.SetActive(true);
+        maxRounds = 5;
+        StartCoroutine(Game());
     }
 
-    IEnumerator VictoriaIA()
+    public void SevenRounds()
     {
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "Qué lástima... La IA ganó esta ronda.";
-        yield return new WaitForSeconds(1.0f);
+        startCanvas.SetActive(false);
+        mainCanvas.SetActive(true);
+        maxRounds = 7;
+        StartCoroutine(Game());
     }
 
-    IEnumerator RondaEmpate()
+    public void Rock()
     {
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "Empate";
-        yield return new WaitForSeconds(1.0f);
+        playerTurn = 0;
+        turn = false;
     }
 
-    IEnumerator FinDeLaPartida()
+    public void Paper()
     {
-        canvasPanel.SetActive(false);
-        canvasTexto.text = "Estos son los resultados de la partida...";
-        yield return new WaitForSeconds(2.0f);
+        playerTurn = 1;
+        turn = false;
+    }
 
-        if (puntosJugador > puntosIA) // JUGADOR GANA
-        {
-            canvasTexto.text = "Has ganado.\n" + puntosJugador + " - " + puntosIA;
-        }
-        else if (puntosJugador < puntosIA) // IA GANA
-        {
-            canvasTexto.text = "Has perdido.\n" + puntosJugador + " - " + puntosIA;
-        }
-        else // EMPATE
-        {
-            canvasTexto.text = "Habéis empatado.\n" + puntosJugador + " - " + puntosIA;
-        }
-        yield return null;
+    public void Scissors()
+    {
+        playerTurn = 2;
+        turn = false;
+    }
+
+    public void PlayAgain()
+    {
+        SceneManager.LoadScene("PPT");
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
     }
 }

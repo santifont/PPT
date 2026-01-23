@@ -18,18 +18,4 @@ public class CanvasManager : MonoBehaviour
         
     }
 
-    public void BotonPiedra()
-    {
-        gameManagerScript.TiradaJugador(0);
-    }
-
-    public void BotonPapel()
-    {
-        gameManagerScript.TiradaJugador(1);
-    }
-
-    public void BotonTijera()
-    {
-        gameManagerScript.TiradaJugador(2);
-    }
 }
