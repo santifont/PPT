@@ -67,14 +67,28 @@ public class GameManager : MonoBehaviour
             }
             //AI turn
             canvasButtons.SetActive(false);
-            canvasText.text = playerHand + ".\nThe AI is thinking...";
-            yield return new WaitForSeconds(2f);
             aiPlay();
+            if (aiTurn == 0)
+            {
+                canvasText.text = playerHand + "\nAI chose ROCK";
+            }
+            else if (aiTurn == 1)
+            {
+                canvasText.text = playerHand + "\nAI chose PAPER";
+            }
+            else if (aiTurn == 2)
+            {
+                canvasText.text = playerHand + "\nAI chose SCISSORS";
+            }
+
+            yield return new WaitForSeconds(2f);
+
             if (playerTurn == 0 && aiTurn == 2 || playerTurn == 1 && aiTurn == 0 || playerTurn == 2 && aiTurn == 1)
             {
-                playerPoints++;
-                canvasText.text = "Congrats!\nYou won this round!\n" + playerPoints + " - " + aiPoints;
+                 playerPoints++;
+                 canvasText.text = "Congrats!\nYou won this round!\n" + playerPoints + " - " + aiPoints;
                 yield return new WaitForSeconds(2f);
+
             }
             else if (playerTurn == aiTurn)
             {
